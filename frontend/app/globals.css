@@ -1,0 +1,172 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #111118;
+  --border: rgba(255,255,255,0.08);
+  --purple: #8b5cf6;
+  --blue: #3b82f6;
+  --cyan: #06b6d4;
+  --text: #f1f5f9;
+  --muted: #64748b;
+  --gradient: linear-gradient(135deg, #8b5cf6, #3b82f6);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  /* Prevent text selection on double-tap on mobile */
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection { background: rgba(139,92,246,0.35); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 99px; }
+
+/* ── Utilities ────────────────────────────────────── */
+.gradient-text {
+  background: var(--gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.btn-primary {
+  background: var(--gradient);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 8px 28px rgba(139,92,246,0.4); }
+.btn-primary:active { transform: scale(0.97); }
+
+.btn-ghost {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.09); color: var(--text); }
+.btn-ghost:active { transform: scale(0.97); }
+
+.card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.card:hover {
+  border-color: rgba(139,92,246,0.25);
+  background: rgba(139,92,246,0.04);
+}
+
+/* ── Ambient orbs ─────────────────────────────────── */
+.orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+.orb-1 {
+  width: min(500px, 80vw); height: min(500px, 80vw);
+  background: radial-gradient(circle, rgba(139,92,246,0.18), transparent 70%);
+  top: -20%; right: -15%;
+  animation: float 10s ease-in-out infinite;
+}
+.orb-2 {
+  width: min(400px, 70vw); height: min(400px, 70vw);
+  background: radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%);
+  bottom: -15%; left: -10%;
+  animation: float 13s ease-in-out infinite reverse;
+}
+
+/* ── Animations ───────────────────────────────────── */
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(-28px); }
+}
+@keyframes pulse {
+  0%,100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.animate-fade-up { animation: fadeUp 0.45s ease-out forwards; }
+
+/* ── Status dot ───────────────────────────────────── */
+.dot-green {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #4ade80;
+  display: inline-block;
+  animation: pulse 2s infinite;
+}
+
+/* ── Typing indicator ─────────────────────────────── */
+.typing-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--purple);
+  display: inline-block;
+  animation: pulse 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ── Video ────────────────────────────────────────── */
+video { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+/* ── Modal ────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.modal-box {
+  width: 100%; max-width: 440px;
+  background: rgba(16,16,22,0.99);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(139,92,246,0.08);
+  animation: fadeUp 0.25s ease-out;
+}
+.modal-accent {
+  height: 2px;
+  background: linear-gradient(90deg, #8b5cf6, #3b82f6, #06b6d4);
+}
+
+/* ── Safe area support (iPhone notch/home bar) ──────── */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+}
