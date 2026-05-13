@@ -164,13 +164,15 @@ export default function Home() {
         }
 
         .pill {
-          display: inline-flex; align-items: center; gap: 7px;
-          padding: 5px 14px; border-radius: 99px;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.1);
+          display: inline-flex; align-items: center; gap: 9px;
+          padding: 6px 16px; border-radius: 99px;
+          background: rgba(15, 15, 25, 0.6);
+          border: 1px solid rgba(255,255,255,0.08);
           font-size: 12px; font-weight: 600; color: #94a3b8;
-          margin-bottom: 26px; backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
+          margin-bottom: 28px; backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          white-space: nowrap;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         .dot {
           width: 7px; height: 7px; border-radius: 50%;
