@@ -292,24 +292,30 @@ export default function Home() {
         .links a:hover { color: #475569; }
 
         @media (max-width: 500px) {
-          .page { justify-content: flex-start; padding-top: 100px; }
-          .center { flex: 1; justify-content: center; margin-bottom: 40px; }
-          .start-btn { padding: 15px 36px; }
+          .page { justify-content: flex-start; padding-top: 120px; }
+          .center { flex: 1; justify-content: center; margin-bottom: 60px; padding: 0 16px; }
+          .headline { font-size: 3.2rem; margin-bottom: 24px; margin-top: 20px; }
+          .start-actions { max-width: 100%; }
+          .start-btn { padding: 18px 24px; border-radius: 18px; }
+          
           .bottom { 
+            width: 100%;
             flex-direction: column; 
-            gap: 16px; 
-            padding: 30px 16px; 
+            gap: 20px; 
+            padding: 40px 24px; 
             position: relative;
-            background: rgba(8, 8, 14, 0.8);
+            background: linear-gradient(to top, rgba(8,8,14,1), rgba(8,8,14,0.4));
             border-top: 1px solid rgba(255,255,255,0.05);
           }
-          .bottom .logo-footer { transform: scale(0.7); height: 40px; display: flex; align-items: center; justify-content: center; }
+          .bottom .logo-footer { display: none; } /* Hide redundant logo on mobile */
           .links { 
-            gap: 16px; 
+            gap: 24px; 
             flex-wrap: wrap; 
             justify-content: center; 
           }
+          .links a { font-size: 13px; color: #94a3b8; }
           .pill { font-size: 11px; }
+          .fine { color: #64748b; font-size: 12px; } /* Improved visibility */
         }
 
         /* ── Age Warning Modal — fully self-contained ────── */
