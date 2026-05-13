@@ -292,10 +292,21 @@ export default function Home() {
         }
         .links a:hover { color: #475569; }
 
-        @media (max-width: 420px) {
+        @media (max-width: 500px) {
           .start-btn { padding: 15px 36px; }
-          .bottom { padding: 10px 16px; }
-          .links { gap: 12px; }
+          .bottom { 
+            flex-direction: column; 
+            gap: 12px; 
+            padding: 20px 16px; 
+            position: relative;
+            background: rgba(8, 8, 14, 0.5);
+            backdrop-filter: blur(10px);
+          }
+          .links { 
+            gap: 16px; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+          }
           .pill { font-size: 11px; }
         }
 
