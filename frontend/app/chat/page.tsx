@@ -772,10 +772,7 @@ export default function ChatPage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 12, color: '#334155', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Users size={13} color="#475569" />
-              {online > 0 ? online.toLocaleString() : '—'}
-            </span>
+
             <button onClick={() => router.push('/')} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8, color: '#475569', cursor: 'pointer', padding: '4px 8px', display: 'flex', alignItems: 'center' }}>
               <X size={16} />
             </button>
@@ -862,12 +859,7 @@ export default function ChatPage() {
               </div>
             </div>
 
-            {/* Unread badge over video (mobile, when chat closed) */}
-            {unread > 0 && !showChat && isMobile && (
-              <button onClick={() => setShowChat(true)} style={{ position: 'absolute', top: '50%', right: 16, transform: 'translateY(-50%)', zIndex: 20, display: 'flex', alignItems: 'center', gap: 6, padding: '10px 16px', borderRadius: 99, background: 'linear-gradient(135deg,#7c3aed,#2563eb)', border: 'none', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 20px rgba(124,58,237,0.4)', transition: 'transform 0.2s' }}>
-                <MessageSquare size={18} /> {unread} new message{unread > 1 ? 's' : ''}
-              </button>
-            )}
+
 
           </div>
 
