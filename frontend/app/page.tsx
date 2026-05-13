@@ -424,8 +424,8 @@ export default function Home() {
         }}>
           <Logo height={50} />
           <nav style={{ display: 'flex', gap: 24 }}>
-            <a href="/about" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 13, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>About</a>
-            <a href="/privacy" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 13, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Privacy</a>
+            <a href="/guidelines" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 13, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Rules</a>
+            <a href="/privacy" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 13, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Safety</a>
           </nav>
         </header>
 
@@ -469,7 +469,6 @@ export default function Home() {
             <a href="/about">About</a>
             <a href="/privacy">Privacy</a>
             <a href="/terms">Terms</a>
-            <a href="/guidelines">Guidelines</a>
           </nav>
         </div>
       </div>
