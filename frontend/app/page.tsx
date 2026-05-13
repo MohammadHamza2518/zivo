@@ -434,18 +434,19 @@ export default function Home() {
         <div className="blob blob-3" />
 
         <div className="center">
-          <div className="pill">
-            <span className="dot" />
-            <span>{online.toLocaleString()} people online</span>
-          </div>
           <h1 className="headline">
             Talk to <em>Strangers.</em>
             <br />No rules.
           </h1>
 
-          <p className="sub">
+          <p className="sub" style={{ marginBottom: '24px' }}>
             Anonymous video chat — instant, free, no account.
           </p>
+
+          <div className="pill" style={{ marginBottom: '20px', background: 'rgba(255,255,255,0.03)', fontSize: '11px', padding: '6px 14px' }}>
+            <span className="dot" style={{ width: '6px', height: '6px' }} />
+            <span>{online.toLocaleString()} people online right now</span>
+          </div>
 
           <div className="start-actions">
             <button className="start-btn male-btn" onClick={() => handleStart('male')}>
