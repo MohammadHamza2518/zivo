@@ -158,9 +158,9 @@ export default function Home() {
 
         .center {
           position: relative; z-index: 10;
-          display: flex; flex-direction: column;
-          align-items: center; text-align: center;
-          padding: 0 22px; max-width: 620px;
+          max-width: 620px; width: 100%;
+          display: flex; flex-direction: column; align-items: center;
+          padding-top: 130px;
         }
 
         .pill {
