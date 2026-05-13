@@ -417,16 +417,10 @@ export default function Home() {
         <header style={{ 
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '16px 32px', background: 'rgba(10, 10, 15, 0.7)',
+          padding: '24px 40px', background: 'rgba(10, 10, 15, 0.7)',
           backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.05)'
         }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <Logo height={50} />
-            <div className="pill" style={{ margin: 0, padding: '2px 8px', fontSize: '10px', background: 'transparent', boxShadow: 'none', opacity: 0.8 }}>
-              <span className="dot" style={{ width: '5px', height: '5px' }} />
-              <span>{online.toLocaleString()} people online</span>
-            </div>
-          </div>
+          <Logo height={50} />
           <nav style={{ display: 'flex', gap: 24 }}>
             <a href="/guidelines" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 13, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Rules</a>
             <a href="/privacy" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 13, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Safety</a>
@@ -439,6 +433,10 @@ export default function Home() {
         <div className="blob blob-3" />
 
         <div className="center">
+          <div className="pill">
+            <span className="dot" />
+            <span>{online.toLocaleString()} people online</span>
+          </div>
           <h1 className="headline">
             Talk to <em>Strangers.</em>
             <br />No rules.
