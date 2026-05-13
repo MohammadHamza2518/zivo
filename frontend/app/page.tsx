@@ -123,6 +123,7 @@ export default function Home() {
           justify-content: center;
           overflow: hidden;
           transition: opacity 0.35s, transform 0.35s;
+          padding: 100px 24px; /* Space for fixed header/footer */
         }
         .page.leaving { opacity: 0; transform: scale(1.04); }
 
@@ -160,7 +161,7 @@ export default function Home() {
           position: relative; z-index: 10;
           max-width: 620px; width: 100%;
           display: flex; flex-direction: column; align-items: center;
-          padding-top: 130px;
+          text-align: center;
         }
 
         .pill {
