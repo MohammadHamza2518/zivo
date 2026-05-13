@@ -123,7 +123,7 @@ export default function Home() {
           justify-content: center;
           overflow: hidden;
           transition: opacity 0.35s, transform 0.35s;
-          padding: 100px 24px; /* Space for fixed header/footer */
+          padding-top: 100px;
         }
         .page.leaving { opacity: 0; transform: scale(1.04); }
 
@@ -162,6 +162,7 @@ export default function Home() {
           max-width: 620px; width: 100%;
           display: flex; flex-direction: column; align-items: center;
           text-align: center;
+          padding: 0 24px;
         }
 
         .pill {
@@ -299,13 +300,14 @@ export default function Home() {
           .start-btn { padding: 18px 24px; border-radius: 18px; }
           
           .bottom { 
-            width: 100%;
+            width: 100vw;
             flex-direction: column; 
             gap: 20px; 
-            padding: 40px 24px; 
+            padding: 30px 24px; 
             position: relative;
-            background: linear-gradient(to top, rgba(8,8,14,1), rgba(8,8,14,0.4));
+            background: rgba(8, 8, 14, 0.95);
             border-top: 1px solid rgba(255,255,255,0.05);
+            margin-top: auto;
           }
           .bottom .logo-footer { display: none; } /* Hide redundant logo on mobile */
           .links { 
