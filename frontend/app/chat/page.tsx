@@ -445,9 +445,13 @@ export default function ChatPage() {
 
     // 4. Start MediaRecorder
     try {
-      const options = { mimeType: 'video/webm' };
-      const recorder = new MediaRecorder(canvasStream, options);
-      
+      // High-quality recording configuration for smooth, lag-free video
+      const recorder = new MediaRecorder(canvasStream, {
+        mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9') 
+          ? 'video/webm;codecs=vp9' 
+          : 'video/webm',
+        bitsPerSecond: 5000000 // Increased to 5Mbps for high-quality professional output
+      });
       recordedChunksRef.current = [];
       recorder.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) {
