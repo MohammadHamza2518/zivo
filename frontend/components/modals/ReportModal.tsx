@@ -29,7 +29,7 @@ export default function ReportModal({ isOpen, onClose, onReport }: {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Report User">
       {done ? (
-        <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: 14, padding: '12px 0' }}>✅ Report submitted. Thanks for keeping Zivo safe.</p>
+        <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: 14, padding: '12px 0' }}>✅ Report submitted. Thanks for keeping Zivo Talk safe.</p>
       ) : (
         <>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>

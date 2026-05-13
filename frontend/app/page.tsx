@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import Logo from '../components/Logo';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function Home() {
@@ -8,6 +9,7 @@ export default function Home() {
   const [showWarn, setShowWarn] = useState(false);
   const [online, setOnline] = useState(1247);
   const [entered, setEntered] = useState(false);
+  const [gender, setGender] = useState<'male' | 'female' | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -83,7 +85,9 @@ export default function Home() {
     setTimeout(() => router.push('/chat'), 350);
   };
 
-  const handleStart = () => {
+  const handleStart = (g: 'male' | 'female') => {
+    setGender(g);
+    if (typeof window !== 'undefined') localStorage.setItem('zivo-gender', g);
     const ok = typeof window !== 'undefined' && localStorage.getItem('zivo-age-ok');
     if (ok) { go(); } else { setShowWarn(true); }
   };
@@ -203,33 +207,53 @@ export default function Home() {
           margin-bottom: 36px; line-height: 1.65;
         }
 
+        .start-actions {
+          display: flex; gap: 14px; margin-bottom: 24px;
+          flex-direction: column; width: 100%; max-width: 320px;
+        }
+        @media (min-width: 500px) {
+          .start-actions { flex-direction: row; max-width: 440px; }
+        }
+
         .start-btn {
           position: relative;
-          padding: 17px 54px; border-radius: 16px; border: none;
-          cursor: pointer;
+          padding: 16px 20px; border-radius: 16px; border: none;
+          cursor: pointer; flex: 1;
           font-family: 'Inter', system-ui, sans-serif;
-          font-size: clamp(1rem, 2.5vw, 1.12rem);
+          font-size: clamp(1rem, 2vw, 1.08rem);
           font-weight: 800; color: #fff;
-          background: linear-gradient(135deg, #7c3aed, #2563eb);
           transition: transform 0.18s, box-shadow 0.18s;
-          margin-bottom: 16px;
           touch-action: manipulation;
           -webkit-tap-highlight-color: transparent;
           overflow: hidden;
-          min-width: 200px;
         }
-        .start-btn::before {
-          content: ''; position: absolute; inset: 0;
-          background: linear-gradient(135deg, #8b5cf6, #3b82f6, #06b6d4);
-          opacity: 0; transition: opacity 0.2s;
+        .start-btn.male-btn {
+          background: linear-gradient(135deg, #3b82f6, #6366f1);
+          box-shadow: 0 8px 24px rgba(59,130,246,0.25);
         }
-        .start-btn:hover { transform: translateY(-3px); box-shadow: 0 20px 50px rgba(124,58,237,0.45); }
-        .start-btn:hover::before { opacity: 1; }
-        .start-btn:active { transform: scale(0.96); }
-        .start-btn span { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .start-btn.male-btn:hover {
+          transform: translateY(-2px); box-shadow: 0 12px 32px rgba(59,130,246,0.4);
+        }
+        .start-btn.male-btn .ring {
+          border: 1px solid rgba(59,130,246,0.5);
+        }
+
+        .start-btn.female-btn {
+          background: linear-gradient(135deg, #ec4899, #8b5cf6);
+          box-shadow: 0 8px 24px rgba(236,72,153,0.25);
+        }
+        .start-btn.female-btn:hover {
+          transform: translateY(-2px); box-shadow: 0 12px 32px rgba(236,72,153,0.4);
+        }
+        .start-btn.female-btn .ring {
+          border: 1px solid rgba(236,72,153,0.5);
+        }
+
+        .start-btn:active { transform: scale(0.96) !important; }
+        .start-btn span { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
         .ring {
           position: absolute; inset: -4px; border-radius: 20px;
-          border: 1px solid rgba(139,92,246,0.5);
           animation: rp 2.5s ease-out infinite; pointer-events: none;
         }
         @keyframes rp {
@@ -354,7 +378,7 @@ export default function Home() {
               <div className="warn-icon">⚠️</div>
               <h2 className="warn-title">Before You Enter</h2>
               <p className="warn-desc">
-                Zivo connects you with real strangers. You must be <strong style={{ color: '#f1f5f9' }}>18+</strong> and agree to our community rules.
+                Zivo Talk connects you with real strangers. You must be <strong style={{ color: '#f1f5f9' }}>18+</strong> and agree to our community rules.
               </p>
               <div className="warn-rules">
                 {['Be respectful to everyone', 'No nudity or explicit content', 'No harassment or hate speech', 'Follow community guidelines'].map(r => (
@@ -365,7 +389,7 @@ export default function Home() {
                 ))}
               </div>
               <button className="warn-btn" onClick={handleAccept}>
-                I Agree — Enter Zivo
+                I Agree — Enter Zivo Talk
               </button>
               <p className="warn-note">
                 By entering you agree to our{' '}
@@ -378,6 +402,20 @@ export default function Home() {
 
       {/* ── Main Page ─────────────────────────────────── */}
       <div className={`page${entered ? ' leaving' : ''}`}>
+        {/* Professional Top Navbar */}
+        <header style={{ 
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '16px 32px', background: 'rgba(10, 10, 15, 0.7)',
+          backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(255,255,255,0.05)'
+        }}>
+          <Logo height={50} />
+          <nav style={{ display: 'flex', gap: 24 }}>
+            <a href="/about" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 13, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>About</a>
+            <a href="/privacy" style={{ color: '#94a3b8', textDecoration: 'none', fontSize: 13, fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Privacy</a>
+          </nav>
+        </header>
+
         <canvas ref={canvasRef} />
         <div className="blob blob-1" />
         <div className="blob blob-2" />
@@ -398,18 +436,22 @@ export default function Home() {
             Anonymous video chat — instant, free, no account.
           </p>
 
-          <button className="start-btn" onClick={handleStart}>
-            <div className="ring" />
-            <span>
-              Start Talking <span className="arrow">→</span>
-            </span>
-          </button>
+          <div className="start-actions">
+            <button className="start-btn male-btn" onClick={() => handleStart('male')}>
+              <div className="ring" />
+              <span>♂ Male <span className="arrow">→</span></span>
+            </button>
+            <button className="start-btn female-btn" onClick={() => handleStart('female')}>
+              <div className="ring" />
+              <span>♀ Female <span className="arrow">→</span></span>
+            </button>
+          </div>
 
           <p className="fine">No signup &nbsp;·&nbsp; No data stored &nbsp;·&nbsp; 18+</p>
         </div>
 
         <div className="bottom">
-          <span className="brand">Zivo</span>
+          <Logo height={60} />
           <nav className="links">
             <a href="/about">About</a>
             <a href="/privacy">Privacy</a>

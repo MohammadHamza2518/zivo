@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Zivo Matchmaking Engine
+ * Zivo Talk Matchmaking Engine
  * In-memory queue with interest-tag matching and filter support.
  */
 

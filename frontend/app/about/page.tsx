@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'About Zivo — Anonymous Video Chat',
-  description: 'Learn how Zivo works and meet the founder. Anonymous random video chat, built for real human connections.',
+  title: 'About Zivo Talk — Anonymous Video Chat',
+  description: 'Learn how Zivo Talk works and meet the founder. Anonymous random video chat, built for real human connections.',
 };
 
 export default function AboutPage() {
@@ -312,19 +312,19 @@ export default function AboutPage() {
 
         {/* ── Navbar ─────────────────────────────────── */}
         <nav className="topnav">
-          <a href="/" className="brand">Zivo</a>
+          <a href="/" style={{ textDecoration: 'none' }}><img src="/zivo-logo-final.png" alt="Zivo Talk" style={{ height: 60, width: 'auto' }} /></a>
           <a href="/" className="back-btn">← Back to Home</a>
         </nav>
 
         {/* ── Hero ───────────────────────────────────── */}
         <div className="hero">
-          <div className="hero-badge">ℹ️ About Zivo</div>
+          <div className="hero-badge">ℹ️ About Zivo Talk</div>
           <h1>
             Real Connections,<br />
             <em>Zero Boundaries.</em>
           </h1>
           <p>
-            Zivo is an anonymous random video chat platform built for people who want genuine, spontaneous conversations — no profiles, no algorithms, no filters.
+            Zivo Talk is an anonymous random video chat platform built for people who want genuine, spontaneous conversations — no profiles, no algorithms, no filters.
           </p>
         </div>
 
@@ -356,7 +356,7 @@ export default function AboutPage() {
               Built on serious tech
             </h3>
             <p style={{ color: '#475569', fontSize: 14, lineHeight: 1.65 }}>
-              No gimmicks. Zivo uses the same WebRTC standard that powers Google Meet, Zoom, and Discord video calls — just without the corporate overhead.
+              No gimmicks. Zivo Talk uses the same WebRTC standard that powers Google Meet, Zoom, and Discord video calls — just without the corporate overhead.
             </p>
             <div className="tech-row">
               {tech.map(t => (
@@ -394,32 +394,32 @@ export default function AboutPage() {
 
         {/* ── Founder ────────────────────────────────── */}
         <div className="founder-section" style={{ paddingTop: 64 }}>
-          <p className="section-label" style={{ marginBottom: 12 }}>The Builder</p>
-          <h2 className="section-title" style={{ marginBottom: 32 }}>Meet the founder</h2>
+          <p className="section-label" style={{ marginBottom: 12 }}>The Team</p>
+          <h2 className="section-title" style={{ marginBottom: 32 }}>Who is behind Zivo Talk?</h2>
 
           <div className="founder-card">
             <div className="founder-accent-bar" />
             <div className="founder-body">
               <div className="founder-meta">
-                <div className="founder-avatar">MH</div>
+                <div className="founder-avatar" style={{ fontSize: 22 }}>MH</div>
                 <div className="founder-info">
-                  <div className="founder-role">Founder & Developer</div>
+                  <div className="founder-role">Founder & CEO, HRS Group</div>
                   <div className="founder-name">Mohammad Hamza</div>
                 </div>
               </div>
 
               <p className="founder-quote">
-                &ldquo;I built Zivo because I missed the raw, unfiltered energy of meeting someone completely random — no bios, no filters, just a real conversation. The internet used to feel like that.&rdquo;
+                &ldquo;We built Zivo Talk to restore the raw, unfiltered energy of genuine human connection on the internet — no intrusive profiles, no data harvesting, just real conversations.&rdquo;
               </p>
 
               <p className="founder-bio">
-                Mohammad Hamza is an indie developer and builder who believes the best products are the ones that get out of the way. Zivo was born from a simple frustration — every platform today demands your data, your profile, your identity.
+                HRS Group is a premium technology collective specializing in high-performance, privacy-first communication platforms. We believe that the best digital products are those that empower users while completely getting out of their way. Zivo Talk was born from a simple vision: to create a secure environment where anyone can connect globally without sacrificing their personal identity.
                 <br /><br />
-                Zivo is the opposite. One click. One conversation. No traces left behind. Hamza built the entire platform from scratch — frontend, backend, real-time signaling, matchmaking engine — all designed to be fast, private, and deployed anywhere with minimal setup.
+                Built from the ground up by Mohammad Hamza under the banner of HRS Group, Zivo Talk leverages state-of-the-art WebRTC signaling, real-time matchmaking algorithms, and robust frontend architecture to deliver an incredibly fast, peer-to-peer video experience that prioritizes your privacy above all else.
               </p>
 
               <div className="founder-tags">
-                {['🚀 Indie Builder', '⚡ Full-Stack Dev', '🎯 Product Design', '🌐 WebRTC', '🔒 Privacy First'].map(t => (
+                {['🏢 HRS Group', '⚡ High-Performance', '🔒 Enterprise Privacy', '🌐 WebRTC Experts', '🎯 Seamless UI'].map(t => (
                   <span key={t} className="founder-tag">{t}</span>
                 ))}
               </div>
@@ -432,6 +432,7 @@ export default function AboutPage() {
           <div className="cta-box">
             <h2>Ready to connect?</h2>
             <p>No account. No setup. Just click and meet someone new.</p>
+            <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 28 }}>For any problem or help: <strong>zivotalk@gmail.com</strong></p>
             <a href="/" className="cta-btn">
               Start Talking →
             </a>
@@ -440,14 +441,14 @@ export default function AboutPage() {
 
         {/* ── Footer ─────────────────────────────────── */}
         <footer className="footer">
-          <span className="footer-brand">Zivo</span>
+          <img src="/zivo-logo-final.png" alt="Zivo Talk" style={{ height: 50, width: 'auto' }} />
           <nav className="footer-links">
             <a href="/about">About</a>
             <a href="/privacy">Privacy</a>
             <a href="/terms">Terms</a>
             <a href="/guidelines">Guidelines</a>
           </nav>
-          <span className="footer-copy">© 2025 Zivo · Built by Mohammad Hamza</span>
+          <span className="footer-copy">© 2026 Zivo Talk · An HRS Group Product</span>
         </footer>
 
       </div>

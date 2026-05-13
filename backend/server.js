@@ -77,7 +77,9 @@ app.get('/admin/rooms', adminAuth, (req, res) => {
       roomId: roomId.slice(0, 8),
       fullRoomId: roomId,
       userA: pair.userA.slice(0, 8),
+      fullUserA: pair.userA,
       userB: pair.userB.slice(0, 8),
+      fullUserB: pair.userB,
       duration: Math.floor((Date.now() - pair.startTime) / 1000),
     });
   });
@@ -267,6 +269,6 @@ app.get('/health', (_req, res) => {
 });
 
 httpServer.listen(PORT, () => {
-  console.log(`🚀 Zivo backend → http://localhost:${PORT}`);
+  console.log(`🚀 Zivo Talk backend → http://localhost:${PORT}`);
   console.log(`🔐 Admin secret: ${ADMIN_SECRET}`);
 });

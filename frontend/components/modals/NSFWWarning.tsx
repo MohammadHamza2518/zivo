@@ -11,7 +11,7 @@ export default function NSFWWarning({ isOpen, onAccept }: { isOpen: boolean; onA
         </div>
         <h2 style={{ fontWeight: 700, fontSize: 18, marginBottom: 8 }}>Before You Enter</h2>
         <p style={{ color: '#64748b', fontSize: 13, lineHeight: 1.6, marginBottom: 20 }}>
-          Zivo connects you with strangers in real-time. You must be <strong style={{ color: '#f1f5f9' }}>18+</strong> and agree to our community standards.
+          Zivo Talk connects you with strangers in real-time. You must be <strong style={{ color: '#f1f5f9' }}>18+</strong> and agree to our community standards.
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20, textAlign: 'left' }}>
           {['Be respectful to everyone', 'No nudity or sexual content', 'No harassment or hate speech', 'Follow community guidelines'].map(rule => (
@@ -24,7 +24,7 @@ export default function NSFWWarning({ isOpen, onAccept }: { isOpen: boolean; onA
           ))}
         </div>
         <button onClick={onAccept} className="btn-primary" style={{ width: '100%', padding: '12px', borderRadius: 12, fontSize: 14, fontWeight: 600 }}>
-          I Agree — Enter Zivo
+          I Agree — Enter Zivo Talk
         </button>
         <p style={{ fontSize: 11, color: '#334155', marginTop: 12 }}>
           By entering you agree to our{' '}

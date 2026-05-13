@@ -14,7 +14,9 @@ interface Room {
   roomId: string;
   fullRoomId: string;
   userA: string;
+  fullUserA: string;
   userB: string;
+  fullUserB: string;
   duration: number;
 }
 interface User {
@@ -116,16 +118,16 @@ export default function AdminPage() {
         *{box-sizing:border-box;margin:0;padding:0;}
         body{background:#08080f;font-family:'Inter',system-ui,sans-serif;color:#f1f5f9;-webkit-font-smoothing:antialiased;}
       `}</style>
-      <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
-        <div style={{ width:'100%', maxWidth:380 }}>
+      <div style={{ minHeight:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', padding:24, position:'relative', overflow:'hidden' }}>
+        {/* Animated background elements */}
+        <div style={{ position:'absolute', width:600, height:600, background:'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 60%)', top:'-20%', right:'-10%', filter:'blur(60px)', zIndex:0 }} />
+        <div style={{ position:'absolute', width:500, height:500, background:'radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 60%)', bottom:'-20%', left:'-10%', filter:'blur(60px)', zIndex:0 }} />
+        
+        <div style={{ width:'100%', maxWidth:400, position:'relative', zIndex:10 }}>
           {/* Logo */}
           <div style={{ textAlign:'center', marginBottom:36 }}>
-            <div style={{ display:'inline-flex', alignItems:'center', justifyContent:'center',
-              width:56, height:56, borderRadius:16, background:'linear-gradient(135deg,#7c3aed,#2563eb)',
-              fontSize:24, fontWeight:900, color:'#fff', marginBottom:16, boxShadow:'0 8px 28px rgba(124,58,237,0.4)' }}>
-              Z
-            </div>
-            <h1 style={{ fontSize:22, fontWeight:900, letterSpacing:'-0.02em', marginBottom:4 }}>Zivo Admin</h1>
+            <img src="/zivo-logo-final.png" alt="Zivo Talk Logo" style={{ height: 120, width: 'auto', marginBottom: 20 }} />
+            <h1 style={{ fontSize:22, fontWeight:900, letterSpacing:'-0.02em', marginBottom:4 }}>Zivo Talk Admin</h1>
             <p style={{ fontSize:13, color:'#334155' }}>Restricted access — owners only</p>
           </div>
 
@@ -213,10 +215,7 @@ export default function AdminPage() {
           borderBottom:'1px solid rgba(255,255,255,0.07)',
           backdropFilter:'blur(16px)' }}>
           <div style={{ display:'flex', alignItems:'center', gap:12 }}>
-            <span style={{ fontSize:16, fontWeight:900, background:'linear-gradient(135deg,#a78bfa,#60a5fa)',
-              WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>
-              Zivo
-            </span>
+            <img src="/zivo-logo-final.png" alt="Zivo Talk" style={{ height: 50, width: 'auto' }} />
             <span style={{ fontSize:12, padding:'2px 10px', borderRadius:99, background:'rgba(139,92,246,0.1)',
               border:'1px solid rgba(139,92,246,0.2)', color:'#a78bfa', fontWeight:700 }}>
               Admin Panel
@@ -254,17 +253,23 @@ export default function AdminPage() {
           )}
 
           {/* Stat cards */}
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px,1fr))', gap:12, marginBottom:28 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(220px,1fr))', gap:16, marginBottom:32 }}>
             {statCards.map(c => (
-              <div key={c.label} style={{ padding:'20px 20px', borderRadius:16,
-                background:'rgba(255,255,255,0.025)', border:'1px solid rgba(255,255,255,0.07)' }}>
-                <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
-                  <span style={{ fontSize:20 }}>{c.icon}</span>
-                  <span style={{ fontSize:11, fontWeight:700, color:'#334155', letterSpacing:'0.06em', textTransform:'uppercase' }}>
+              <div key={c.label} style={{ position:'relative', padding:'24px', borderRadius:20, overflow:'hidden',
+                background:'rgba(255,255,255,0.02)', border:'1px solid rgba(255,255,255,0.06)',
+                boxShadow:'0 10px 40px rgba(0,0,0,0.3)', backdropFilter:'blur(10px)' }}>
+                {/* Glow behind the card value */}
+                <div style={{ position:'absolute', top:'-20%', right:'-10%', width:120, height:120, borderRadius:'50%', background:c.color, opacity:0.1, filter:'blur(40px)', pointerEvents:'none' }} />
+                
+                <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14, position:'relative', zIndex:1 }}>
+                  <div style={{ width:36, height:36, borderRadius:10, background:`${c.color}15`, border:`1px solid ${c.color}30`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>
+                    {c.icon}
+                  </div>
+                  <span style={{ fontSize:12, fontWeight:700, color:'#64748b', letterSpacing:'0.06em', textTransform:'uppercase' }}>
                     {c.label}
                   </span>
                 </div>
-                <div style={{ fontSize:32, fontWeight:900, letterSpacing:'-0.03em', color: c.color }}>
+                <div style={{ fontSize:40, fontWeight:900, letterSpacing:'-0.02em', color: c.color, position:'relative', zIndex:1, textShadow:`0 4px 20px ${c.color}30` }}>
                   {c.value}
                 </div>
               </div>
@@ -301,21 +306,21 @@ export default function AdminPage() {
                   <p style={{ fontSize:12, fontWeight:700, color:'#8b5cf6', letterSpacing:'0.08em', marginBottom:16 }}>
                     PLATFORM HEALTH
                   </p>
-                  <div style={{ display:'grid', gap:10 }}>
+                  <div style={{ display:'grid', gap:16 }}>
                     {[
                       { label:'Online users', value: stats?.online || 0, max:1000, color:'#60a5fa' },
                       { label:'Active chat sessions', value: stats?.activeChats || 0, max:500, color:'#4ade80' },
                       { label:'Users in queue', value: stats?.inQueue || 0, max:100, color:'#fbbf24' },
                     ].map(r => (
                       <div key={r.label}>
-                        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
-                          <span style={{ fontSize:13, color:'#64748b' }}>{r.label}</span>
-                          <span style={{ fontSize:13, fontWeight:700, color:r.color }}>{r.value}</span>
+                        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+                          <span style={{ fontSize:14, fontWeight:500, color:'#94a3b8' }}>{r.label}</span>
+                          <span style={{ fontSize:14, fontWeight:800, color:r.color }}>{r.value} <span style={{fontSize:11, color:'#475569', fontWeight:600}}>/ {r.max}</span></span>
                         </div>
-                        <div style={{ height:6, borderRadius:99, background:'rgba(255,255,255,0.05)', overflow:'hidden' }}>
+                        <div style={{ height:8, borderRadius:99, background:'rgba(255,255,255,0.04)', overflow:'hidden', border:'1px solid rgba(255,255,255,0.02)' }}>
                           <div style={{ height:'100%', borderRadius:99, background:r.color,
                             width:`${Math.min(100, (r.value / r.max) * 100)}%`,
-                            transition:'width 0.5s ease' }} />
+                            transition:'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow:`0 0 10px ${r.color}80` }} />
                         </div>
                       </div>
                     ))}
@@ -356,8 +361,8 @@ export default function AdminPage() {
                           <td style={{ color:'#fbbf24' }}>{fmt(r.duration)}</td>
                           <td>
                             <div style={{ display:'flex', gap:6 }}>
-                              <button className="kick-btn" onClick={() => kick(r.fullRoomId.slice(0,20), r.roomId)}>Kick A</button>
-                              <button className="kick-btn" onClick={() => kick(r.fullRoomId.slice(0,20), r.roomId)}>Kick B</button>
+                              <button className="kick-btn" onClick={() => kick(r.fullUserA, r.userA)}>Kick A</button>
+                              <button className="kick-btn" onClick={() => kick(r.fullUserB, r.userB)}>Kick B</button>
                             </div>
                           </td>
                         </tr>

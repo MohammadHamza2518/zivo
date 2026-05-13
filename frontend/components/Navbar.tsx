@@ -25,12 +25,7 @@ export default function Navbar() {
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {/* Logo */}
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: 'linear-gradient(135deg,#8b5cf6,#3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Video size={15} color="#fff" />
-          </div>
-          <span style={{ fontWeight: 800, fontSize: 18, background: 'linear-gradient(135deg,#8b5cf6,#3b82f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-            Zivo
-          </span>
+          <img src="/zivo-logo.png" alt="Zivo Talk" style={{ height: 48, width: 'auto' }} />
         </Link>
 
         {/* Desktop nav */}
