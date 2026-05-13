@@ -292,15 +292,18 @@ export default function Home() {
         .links a:hover { color: #475569; }
 
         @media (max-width: 500px) {
+          .page { justify-content: flex-start; padding-top: 100px; }
+          .center { flex: 1; justify-content: center; margin-bottom: 40px; }
           .start-btn { padding: 15px 36px; }
           .bottom { 
             flex-direction: column; 
-            gap: 12px; 
-            padding: 20px 16px; 
+            gap: 16px; 
+            padding: 30px 16px; 
             position: relative;
-            background: rgba(8, 8, 14, 0.5);
-            backdrop-filter: blur(10px);
+            background: rgba(8, 8, 14, 0.8);
+            border-top: 1px solid rgba(255,255,255,0.05);
           }
+          .bottom .logo-footer { transform: scale(0.7); height: 40px; display: flex; align-items: center; justify-content: center; }
           .links { 
             gap: 16px; 
             flex-wrap: wrap; 
@@ -463,7 +466,7 @@ export default function Home() {
         </div>
 
         <div className="bottom">
-          <Logo height={60} />
+          <div className="logo-footer"><Logo height={60} /></div>
           <nav className="links">
             <a href="/about">About</a>
             <a href="/privacy">Privacy</a>
