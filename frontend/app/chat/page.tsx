@@ -6,7 +6,7 @@ import { io, Socket } from 'socket.io-client';
 import Logo from '../../components/Logo';
 import {
   Mic, MicOff, Video, VideoOff, SkipForward, PhoneOff,
-  Flag, Send, MessageSquare, X, Users, ChevronDown, Disc
+  Flag, Send, MessageSquare, X, Users, ChevronDown, Disc, Maximize2, Minimize2
 } from 'lucide-react';
 import ReportModal from '../../components/modals/ReportModal';
 
@@ -61,6 +61,16 @@ export default function ChatPage() {
   const localAudioSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const remoteAudioSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
 
+  // Face detection refs
+  const faceDetectRafRef = useRef<number | null>(null);
+  const faceDetectCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const noFaceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const warningTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const lastFaceSeenRef = useRef<number>(Date.now());
+
+  // Fullscreen ref
+  const chatRootRef = useRef<HTMLDivElement | null>(null);
+
   const [status, setStatus] = useState<Status>('idle');
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
@@ -76,6 +86,13 @@ export default function ChatPage() {
   const [localSpeaking, setLocalSpeaking] = useState(false);
   const [remoteSpeaking, setRemoteSpeaking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+
+  // Face detection state
+  const [faceWarning, setFaceWarning] = useState(false);
+  const [faceCountdown, setFaceCountdown] = useState(10);
+
+  // Fullscreen state
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const startAudioMonitor = useCallback((stream: MediaStream, setSpeaking: React.Dispatch<React.SetStateAction<boolean>>, rafRef: React.MutableRefObject<number | null>) => {
     try {
@@ -505,6 +522,132 @@ export default function ChatPage() {
     else startRecording();
   };
 
+  // ─── Face Detection ─────────────────────────────────────────────
+  // Uses browser FaceDetector API where available; falls back to a
+  // brightness-variance heuristic on a tiny canvas sample.
+  const startFaceDetection = useCallback(() => {
+    if (!localVideoRef.current) return;
+    const video = localVideoRef.current;
+
+    // Ensure we have a tiny offscreen canvas for the fallback
+    if (!faceDetectCanvasRef.current) {
+      const c = document.createElement('canvas');
+      c.width = 64; c.height = 64;
+      faceDetectCanvasRef.current = c;
+    }
+    const offCanvas = faceDetectCanvasRef.current;
+    const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
+
+    const hasFaceDetector = typeof (window as any).FaceDetector !== 'undefined';
+    const faceDetector = hasFaceDetector ? new (window as any).FaceDetector({ fastMode: true, maxDetectedFaces: 1 }) : null;
+
+    lastFaceSeenRef.current = Date.now();
+
+    const check = async () => {
+      if (video.readyState >= 2) {
+        let faceFound = false;
+        try {
+          if (faceDetector) {
+            const faces = await faceDetector.detect(video);
+            faceFound = faces.length > 0;
+          } else if (offCtx) {
+            // Fallback: sample brightness variance — a face introduces skin-tone contrast
+            offCtx.drawImage(video, 0, 0, 64, 64);
+            const data = offCtx.getImageData(0, 0, 64, 64).data;
+            let sum = 0, sumSq = 0;
+            const total = data.length / 4;
+            for (let i = 0; i < data.length; i += 4) {
+              const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+              sum += lum; sumSq += lum * lum;
+            }
+            const mean = sum / total;
+            const variance = sumSq / total - mean * mean;
+            // Typical face-present variance is >200; near-black <50
+            faceFound = variance > 200 && mean > 20;
+          }
+        } catch { /* ignore detection errors */ }
+
+        if (faceFound) {
+          lastFaceSeenRef.current = Date.now();
+          // If warning was showing, dismiss it
+          if (noFaceTimerRef.current) { clearTimeout(noFaceTimerRef.current); noFaceTimerRef.current = null; }
+          if (warningTimerRef.current) { clearInterval(warningTimerRef.current); warningTimerRef.current = null; }
+          setFaceWarning(false);
+          setFaceCountdown(10);
+        } else {
+          const elapsed = (Date.now() - lastFaceSeenRef.current) / 1000;
+          if (elapsed >= 40 && !noFaceTimerRef.current && !faceWarning) {
+            // Trigger warning — show 10-second countdown
+            setFaceWarning(true);
+            setFaceCountdown(10);
+            let cd = 10;
+            noFaceTimerRef.current = setTimeout(() => {
+              // Warning auto-dismisses after 10s
+              setFaceWarning(false);
+              setFaceCountdown(10);
+              noFaceTimerRef.current = null;
+              if (warningTimerRef.current) { clearInterval(warningTimerRef.current); warningTimerRef.current = null; }
+              // Reset so it can fire again if face still absent
+              lastFaceSeenRef.current = Date.now();
+            }, 10000);
+            warningTimerRef.current = setInterval(() => {
+              cd -= 1;
+              setFaceCountdown(cd);
+            }, 1000);
+          }
+        }
+      }
+      // Run check ~5× per second to save CPU
+      faceDetectRafRef.current = window.setTimeout(() => {
+        faceDetectRafRef.current = requestAnimationFrame(check) as unknown as number;
+      }, 200) as unknown as number;
+    };
+    faceDetectRafRef.current = requestAnimationFrame(check) as unknown as number;
+  }, [faceWarning]);
+
+  const stopFaceDetection = useCallback(() => {
+    if (faceDetectRafRef.current) { clearTimeout(faceDetectRafRef.current); faceDetectRafRef.current = null; }
+    if (noFaceTimerRef.current) { clearTimeout(noFaceTimerRef.current); noFaceTimerRef.current = null; }
+    if (warningTimerRef.current) { clearInterval(warningTimerRef.current); warningTimerRef.current = null; }
+    setFaceWarning(false);
+    setFaceCountdown(10);
+  }, []);
+
+  // Start/stop face detection based on connection state & cam status
+  useEffect(() => {
+    if (status === 'connected' && camOn) {
+      startFaceDetection();
+    } else {
+      stopFaceDetection();
+    }
+    return () => stopFaceDetection();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, camOn]);
+
+  // ─── Fullscreen ──────────────────────────────────────────────────
+  const toggleFullscreen = useCallback(async () => {
+    const el = chatRootRef.current;
+    if (!el) return;
+    if (!document.fullscreenElement) {
+      try {
+        await el.requestFullscreen();
+      } catch {
+        // Fallback: just toggle our CSS fullscreen class
+        setIsFullscreen(true);
+      }
+    } else {
+      try {
+        await document.exitFullscreen();
+      } catch { setIsFullscreen(false); }
+    }
+  }, []);
+
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+
   // Removed PiP variables since we are switching to an Omegle-style split-screen layout
 
   return (
@@ -589,6 +732,67 @@ export default function ChatPage() {
     <>
       {/* ── Inline responsive styles ──────────────────── */}
       <style>{`
+        /* ── Face warning overlay ─────────────────── */
+        @keyframes face-warn-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0.5); }
+          50% { box-shadow: 0 0 0 16px rgba(251,191,36,0); }
+        }
+        @keyframes face-warn-slide {
+          from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+          to   { opacity: 1; transform: translateY(0)   scale(1); }
+        }
+        .face-warn-overlay {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          z-index: 50;
+          background: rgba(10,10,15,0.92);
+          border: 1.5px solid rgba(251,191,36,0.5);
+          border-radius: 20px;
+          padding: 28px 36px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 12px;
+          animation: face-warn-slide 0.3s ease-out forwards;
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          max-width: 320px;
+          width: 90%;
+          text-align: center;
+        }
+        .face-warn-icon {
+          width: 64px; height: 64px;
+          border-radius: 50%;
+          background: rgba(251,191,36,0.12);
+          border: 1.5px solid rgba(251,191,36,0.3);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 30px;
+          animation: face-warn-pulse 1.5s ease-in-out infinite;
+        }
+        .face-warn-countdown {
+          width: 52px; height: 52px;
+          border-radius: 50%;
+          background: rgba(251,191,36,0.15);
+          border: 2px solid rgba(251,191,36,0.6);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 22px; font-weight: 800;
+          color: #fbbf24;
+          font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        /* ── Fullscreen pseudo-mode (CSS fallback) ── */
+        .zivo-fullscreen {
+          position: fixed !important;
+          inset: 0 !important;
+          z-index: 9999 !important;
+          border-radius: 0 !important;
+        }
+        .zivo-fullscreen .topbar-hide {
+          display: none !important;
+        }
+
         .video-wrapper {
           flex: 1;
           display: flex;
@@ -754,12 +958,12 @@ export default function ChatPage() {
         }
       `}</style>
 
-      <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: '#0a0a0f', overflow: 'hidden' }}>
+      <div ref={chatRootRef} style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: '#0a0a0f', overflow: 'hidden' }} className={isFullscreen ? 'zivo-fullscreen' : ''}>
         <ReportModal isOpen={showReport} onClose={() => setShowReport(false)} onReport={handleReport} />
 
         {/* ── Top bar ──────────────────────────────────── */}
-        <div style={{
-          height: 52, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        <div className="topbar-hide" style={{
+          height: isFullscreen ? 0 : 52, display: isFullscreen ? 'none' : 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '0 14px', background: 'rgba(17,17,24,0.97)',
           borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0, zIndex: 10,
         }}>
@@ -863,7 +1067,34 @@ export default function ChatPage() {
               </div>
             </div>
 
-
+            {/* ── Face-not-detected Warning Overlay ───────────── */}
+            {faceWarning && (
+              <div style={{ position: 'absolute', inset: 0, zIndex: 40, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="face-warn-overlay" style={{ pointerEvents: 'auto' }}>
+                  <div className="face-warn-icon">👤</div>
+                  <p style={{ fontSize: 16, fontWeight: 800, color: '#fbbf24', margin: 0 }}>Face Not Detected</p>
+                  <p style={{ fontSize: 13, color: '#94a3b8', margin: 0, lineHeight: 1.6 }}>
+                    We can't see you! Please make sure your face is visible to your camera for a professional experience.
+                  </p>
+                  <div className="face-warn-countdown">{faceCountdown}</div>
+                  <p style={{ fontSize: 11, color: '#475569', margin: 0 }}>Auto-dismissing in {faceCountdown}s</p>
+                  <button
+                    onClick={() => {
+                      stopFaceDetection();
+                      lastFaceSeenRef.current = Date.now();
+                    }}
+                    style={{
+                      marginTop: 4, padding: '8px 20px', borderRadius: 10, border: 'none',
+                      background: 'rgba(251,191,36,0.15)', color: '#fbbf24',
+                      fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                      border: '1px solid rgba(251,191,36,0.3)',
+                    } as React.CSSProperties}
+                  >
+                    Got it, dismiss
+                  </button>
+                </div>
+              </div>
+            )}
 
           </div>
 
@@ -1013,6 +1244,17 @@ export default function ChatPage() {
           {/* End — solid red */}
           <button className="cb-end" onClick={handleEnd} title="End chat">
             <PhoneOff size={19} />
+          </button>
+
+          {/* Fullscreen */}
+          <button
+            className="cb cb-default"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            style={{ marginLeft: 2 }}
+          >
+            {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+            <span className="cb-label">{isFullscreen ? 'Exit' : 'Full'}</span>
           </button>
 
           {/* Report — subtle */}
