@@ -523,12 +523,11 @@ export default function ChatPage() {
   };
 
   // ─── Face Detection ─────────────────────────────────────────────
-  // Primary: browser FaceDetector API (Chrome desktop).
-  // Fallback: Kovac skin-tone detection on the CENTER 40% of the frame.
-  // A ceiling/wall will never have enough skin-tone pixels to pass.
+  // Monitors the STRANGER's video feed. If no face is detected for 40s,
+  // shows a subtle professional toast at the bottom of their video box.
   const startFaceDetection = useCallback(() => {
-    if (!localVideoRef.current) return;
-    const video = localVideoRef.current;
+    if (!remoteVideoRef.current) return;
+    const video = remoteVideoRef.current;
 
     // Offscreen canvas — sample at 80×80 for speed
     if (!faceDetectCanvasRef.current) {
@@ -742,54 +741,50 @@ export default function ChatPage() {
     <>
       {/* ── Inline responsive styles ──────────────────── */}
       <style>{`
-        /* ── Face warning overlay ─────────────────── */
-        @keyframes face-warn-pulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0.5); }
-          50% { box-shadow: 0 0 0 16px rgba(251,191,36,0); }
+
+
+        @keyframes toast-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes face-warn-slide {
-          from { opacity: 0; transform: translateY(-20px) scale(0.95); }
-          to   { opacity: 1; transform: translateY(0)   scale(1); }
+        @keyframes toast-bar {
+          from { width: 100%; }
+          to   { width: 0%; }
         }
-        .face-warn-overlay {
+        .stranger-toast {
           position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          z-index: 50;
-          background: rgba(10,10,15,0.92);
-          border: 1.5px solid rgba(251,191,36,0.5);
-          border-radius: 20px;
-          padding: 28px 36px;
+          bottom: 14px;
+          left: 12px;
+          right: 12px;
+          z-index: 30;
+          background: rgba(10, 10, 16, 0.88);
+          border: 1px solid rgba(251, 191, 36, 0.35);
+          border-radius: 12px;
+          padding: 10px 14px;
           display: flex;
-          flex-direction: column;
           align-items: center;
-          gap: 12px;
-          animation: face-warn-slide 0.3s ease-out forwards;
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
-          max-width: 320px;
-          width: 90%;
-          text-align: center;
+          gap: 10px;
+          animation: toast-in 0.3s ease-out;
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          overflow: hidden;
         }
-        .face-warn-icon {
-          width: 64px; height: 64px;
-          border-radius: 50%;
-          background: rgba(251,191,36,0.12);
-          border: 1.5px solid rgba(251,191,36,0.3);
-          display: flex; align-items: center; justify-content: center;
-          font-size: 30px;
-          animation: face-warn-pulse 1.5s ease-in-out infinite;
+        .stranger-toast-bar {
+          position: absolute;
+          bottom: 0; left: 0; height: 2px;
+          background: rgba(251,191,36,0.6);
+          border-radius: 0 0 12px 12px;
+          animation: toast-bar 10s linear forwards;
         }
-        .face-warn-countdown {
-          width: 52px; height: 52px;
-          border-radius: 50%;
-          background: rgba(251,191,36,0.15);
-          border: 2px solid rgba(251,191,36,0.6);
-          display: flex; align-items: center; justify-content: center;
-          font-size: 22px; font-weight: 800;
-          color: #fbbf24;
-          font-family: 'Inter', system-ui, sans-serif;
+        .stranger-toast-dot {
+          width: 8px; height: 8px; border-radius: 50%;
+          background: #fbbf24; flex-shrink: 0;
+          box-shadow: 0 0 6px rgba(251,191,36,0.8);
+          animation: breathe 1.5s ease-in-out infinite;
+        }
+        @keyframes breathe {
+          0%,100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.4; transform: scale(0.75); }
         }
 
         /* ── Fullscreen pseudo-mode (CSS fallback) ── */
@@ -1066,6 +1061,31 @@ export default function ChatPage() {
                   <span style={{ fontSize: 12, color: '#e2e8f0', marginLeft: 4, fontWeight: 500 }}>typing…</span>
                 </div>
               )}
+
+              {/* ── Stranger no-face toast ───────────────────── */}
+              {faceWarning && status === 'connected' && (
+                <div className="stranger-toast">
+                  <div className="stranger-toast-bar" />
+                  <span className="stranger-toast-dot" />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: '#fbbf24', margin: 0, lineHeight: 1.3 }}>
+                      Stranger may have stepped away
+                    </p>
+                    <p style={{ fontSize: 11, color: '#64748b', margin: 0, marginTop: 2 }}>
+                      No face detected · auto-dismissing in {faceCountdown}s
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { stopFaceDetection(); lastFaceSeenRef.current = Date.now(); }}
+                    style={{
+                      flexShrink: 0, width: 22, height: 22, borderRadius: 6, border: 'none',
+                      background: 'rgba(255,255,255,0.07)', color: '#64748b',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 13, fontWeight: 700, lineHeight: 1,
+                    }}
+                  >✕</button>
+                </div>
+              )}
             </div>
 
             {/* Local / You container */}
@@ -1087,34 +1107,6 @@ export default function ChatPage() {
               </div>
             </div>
 
-            {/* ── Face-not-detected Warning Overlay ───────────── */}
-            {faceWarning && (
-              <div style={{ position: 'absolute', inset: 0, zIndex: 40, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div className="face-warn-overlay" style={{ pointerEvents: 'auto' }}>
-                  <div className="face-warn-icon">👤</div>
-                  <p style={{ fontSize: 16, fontWeight: 800, color: '#fbbf24', margin: 0 }}>Face Not Detected</p>
-                  <p style={{ fontSize: 13, color: '#94a3b8', margin: 0, lineHeight: 1.6 }}>
-                    We can't see you! Please make sure your face is visible to your camera for a professional experience.
-                  </p>
-                  <div className="face-warn-countdown">{faceCountdown}</div>
-                  <p style={{ fontSize: 11, color: '#475569', margin: 0 }}>Auto-dismissing in {faceCountdown}s</p>
-                  <button
-                    onClick={() => {
-                      stopFaceDetection();
-                      lastFaceSeenRef.current = Date.now();
-                    }}
-                    style={{
-                      marginTop: 4, padding: '8px 20px', borderRadius: 10,
-                      border: '1px solid rgba(251,191,36,0.3)',
-                      background: 'rgba(251,191,36,0.15)', color: '#fbbf24',
-                      fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                    }}
-                  >
-                    Got it, dismiss
-                  </button>
-                </div>
-              </div>
-            )}
 
           </div>
 
