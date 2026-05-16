@@ -1084,11 +1084,11 @@ export default function ChatPage() {
                       lastFaceSeenRef.current = Date.now();
                     }}
                     style={{
-                      marginTop: 4, padding: '8px 20px', borderRadius: 10, border: 'none',
+                      marginTop: 4, padding: '8px 20px', borderRadius: 10,
+                      border: '1px solid rgba(251,191,36,0.3)',
                       background: 'rgba(251,191,36,0.15)', color: '#fbbf24',
                       fontSize: 13, fontWeight: 700, cursor: 'pointer',
-                      border: '1px solid rgba(251,191,36,0.3)',
-                    } as React.CSSProperties}
+                    }}
                   >
                     Got it, dismiss
                   </button>
