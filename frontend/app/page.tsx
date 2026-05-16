@@ -21,6 +21,14 @@ export default function Home() {
     if (searchParams.get('warn') === '1') setShowWarn(true);
   }, [searchParams]);
 
+  // Show warning automatically on first ever visit
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const ok = localStorage.getItem('zivo-age-ok');
+      if (!ok) setShowWarn(true);
+    }
+  }, []);
+
   // Particle canvas
   useEffect(() => {
     const canvas = canvasRef.current;

@@ -523,25 +523,38 @@ export default function ChatPage() {
   };
 
   // ─── Face Detection ─────────────────────────────────────────────
-  // Uses browser FaceDetector API where available; falls back to a
-  // brightness-variance heuristic on a tiny canvas sample.
+  // Primary: browser FaceDetector API (Chrome desktop).
+  // Fallback: Kovac skin-tone detection on the CENTER 40% of the frame.
+  // A ceiling/wall will never have enough skin-tone pixels to pass.
   const startFaceDetection = useCallback(() => {
     if (!localVideoRef.current) return;
     const video = localVideoRef.current;
 
-    // Ensure we have a tiny offscreen canvas for the fallback
+    // Offscreen canvas — sample at 80×80 for speed
     if (!faceDetectCanvasRef.current) {
       const c = document.createElement('canvas');
-      c.width = 64; c.height = 64;
+      c.width = 80; c.height = 80;
       faceDetectCanvasRef.current = c;
     }
     const offCanvas = faceDetectCanvasRef.current;
     const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
 
     const hasFaceDetector = typeof (window as any).FaceDetector !== 'undefined';
-    const faceDetector = hasFaceDetector ? new (window as any).FaceDetector({ fastMode: true, maxDetectedFaces: 1 }) : null;
+    const faceDetector = hasFaceDetector
+      ? new (window as any).FaceDetector({ fastMode: true, maxDetectedFaces: 1 })
+      : null;
 
     lastFaceSeenRef.current = Date.now();
+
+    // Kovac et al. skin-tone classifier (works in any lighting)
+    const isSkinPixel = (r: number, g: number, b: number): boolean => {
+      return (
+        r > 95 && g > 40 && b > 20 &&
+        Math.max(r, g, b) - Math.min(r, g, b) > 15 &&
+        Math.abs(r - g) > 15 &&
+        r > g && r > b
+      );
+    };
 
     const check = async () => {
       if (video.readyState >= 2) {
@@ -551,25 +564,25 @@ export default function ChatPage() {
             const faces = await faceDetector.detect(video);
             faceFound = faces.length > 0;
           } else if (offCtx) {
-            // Fallback: sample brightness variance — a face introduces skin-tone contrast
-            offCtx.drawImage(video, 0, 0, 64, 64);
-            const data = offCtx.getImageData(0, 0, 64, 64).data;
-            let sum = 0, sumSq = 0;
+            // Draw only the CENTER 40% of the video (where face usually is)
+            const vw = video.videoWidth || 640;
+            const vh = video.videoHeight || 480;
+            const cropX = vw * 0.3, cropY = vh * 0.1;
+            const cropW = vw * 0.4, cropH = vh * 0.8;
+            offCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, 80, 80);
+            const data = offCtx.getImageData(0, 0, 80, 80).data;
+            let skinCount = 0;
             const total = data.length / 4;
             for (let i = 0; i < data.length; i += 4) {
-              const lum = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-              sum += lum; sumSq += lum * lum;
+              if (isSkinPixel(data[i], data[i + 1], data[i + 2])) skinCount++;
             }
-            const mean = sum / total;
-            const variance = sumSq / total - mean * mean;
-            // Typical face-present variance is >200; near-black <50
-            faceFound = variance > 200 && mean > 20;
+            // If >8% of center pixels are skin-tone → face present
+            faceFound = (skinCount / total) > 0.08;
           }
-        } catch { /* ignore detection errors */ }
+        } catch { /* ignore */ }
 
         if (faceFound) {
           lastFaceSeenRef.current = Date.now();
-          // If warning was showing, dismiss it
           if (noFaceTimerRef.current) { clearTimeout(noFaceTimerRef.current); noFaceTimerRef.current = null; }
           if (warningTimerRef.current) { clearInterval(warningTimerRef.current); warningTimerRef.current = null; }
           setFaceWarning(false);
@@ -577,17 +590,14 @@ export default function ChatPage() {
         } else {
           const elapsed = (Date.now() - lastFaceSeenRef.current) / 1000;
           if (elapsed >= 40 && !noFaceTimerRef.current && !faceWarning) {
-            // Trigger warning — show 10-second countdown
             setFaceWarning(true);
             setFaceCountdown(10);
             let cd = 10;
             noFaceTimerRef.current = setTimeout(() => {
-              // Warning auto-dismisses after 10s
               setFaceWarning(false);
               setFaceCountdown(10);
               noFaceTimerRef.current = null;
               if (warningTimerRef.current) { clearInterval(warningTimerRef.current); warningTimerRef.current = null; }
-              // Reset so it can fire again if face still absent
               lastFaceSeenRef.current = Date.now();
             }, 10000);
             warningTimerRef.current = setInterval(() => {
@@ -597,10 +607,10 @@ export default function ChatPage() {
           }
         }
       }
-      // Run check ~5× per second to save CPU
+      // Check every 500ms — enough accuracy, low CPU
       faceDetectRafRef.current = window.setTimeout(() => {
         faceDetectRafRef.current = requestAnimationFrame(check) as unknown as number;
-      }, 200) as unknown as number;
+      }, 500) as unknown as number;
     };
     faceDetectRafRef.current = requestAnimationFrame(check) as unknown as number;
   }, [faceWarning]);
@@ -949,12 +959,22 @@ export default function ChatPage() {
         .cb-end:hover { background: #ef4444; }
         .cb-end:active { transform: scale(0.91); }
 
-        @media (max-width: 480px) {
-          .ctrl-pill { gap: 4px; padding: 5px 6px; }
-          .cb { width: 46px; height: 46px; }
-          .cb-next { height: 46px; padding: 0 16px; }
+        /* ── Mobile: compact controls, hide fullscreen ── */
+        @media (max-width: 640px) {
+          .controls-bar { gap: 6px; padding: 8px 10px; padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+          .ctrl-pill { gap: 3px; padding: 4px 5px; }
+          .cb { width: 40px; height: 40px; border-radius: 12px; }
+          .cb-label { font-size: 8px; }
+          .cb-next { height: 40px; padding: 0 14px; font-size: 13px; }
           .cb-next .next-label { display: none; }
-          .cb-end { width: 46px; height: 46px; }
+          .cb-end { width: 40px; height: 40px; border-radius: 12px; }
+          .cb-fullscreen { display: none !important; }
+        }
+        @media (max-width: 380px) {
+          .cb { width: 36px; height: 36px; }
+          .cb-label { display: none; }
+          .cb-next { height: 38px; padding: 0 12px; }
+          .cb-end { width: 38px; height: 38px; }
         }
       `}</style>
 
@@ -1246,12 +1266,11 @@ export default function ChatPage() {
             <PhoneOff size={19} />
           </button>
 
-          {/* Fullscreen */}
+          {/* Fullscreen — hidden on mobile via CSS */}
           <button
-            className="cb cb-default"
+            className="cb cb-default cb-fullscreen"
             onClick={toggleFullscreen}
             title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-            style={{ marginLeft: 2 }}
           >
             {isFullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
             <span className="cb-label">{isFullscreen ? 'Exit' : 'Full'}</span>
