@@ -61,12 +61,21 @@ export default function ChatPage() {
   const localAudioSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const remoteAudioSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
 
-  // Face detection refs
-  const faceDetectRafRef = useRef<number | null>(null);
-  const faceDetectCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const noFaceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const warningTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const lastFaceSeenRef = useRef<number>(Date.now());
+  // Face detection refs — stranger
+  const strangerDetectRafRef = useRef<number | null>(null);
+  const strangerDetectCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const strangerNoFaceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const strangerWarningTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const strangerLastSeenRef = useRef<number>(Date.now());
+  const strangerWarningActiveRef = useRef(false);
+
+  // Face detection refs — local (you)
+  const localDetectRafRef = useRef<number | null>(null);
+  const localDetectCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const localNoFaceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const localWarningTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const localLastSeenRef = useRef<number>(Date.now());
+  const localWarningActiveRef = useRef(false);
 
   // Fullscreen ref
   const chatRootRef = useRef<HTMLDivElement | null>(null);
@@ -88,8 +97,10 @@ export default function ChatPage() {
   const [isRecording, setIsRecording] = useState(false);
 
   // Face detection state
-  const [faceWarning, setFaceWarning] = useState(false);
-  const [faceCountdown, setFaceCountdown] = useState(10);
+  const [strangerFaceWarning, setStrangerFaceWarning] = useState(false);
+  const [strangerCountdown, setStrangerCountdown] = useState(10);
+  const [localFaceWarning, setLocalFaceWarning] = useState(false);
+  const [localCountdown, setLocalCountdown] = useState(10);
 
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -522,114 +533,127 @@ export default function ChatPage() {
     else startRecording();
   };
 
-  // ─── Face Detection ─────────────────────────────────────────────
-  // Monitors the STRANGER's video feed. If no face is detected for 40s,
-  // shows a subtle professional toast at the bottom of their video box.
-  const startFaceDetection = useCallback(() => {
-    if (!remoteVideoRef.current) return;
-    const video = remoteVideoRef.current;
+  // ─── Face Detection (both videos) ──────────────────────────────
+  // Generic detector — runs on any video element, updates independent state.
+  const runFaceDetector = useCallback((
+    getVideo: () => HTMLVideoElement | null,
+    canvasRef: React.MutableRefObject<HTMLCanvasElement | null>,
+    rafRef: React.MutableRefObject<number | null>,
+    timerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>,
+    intervalRef: React.MutableRefObject<ReturnType<typeof setInterval> | null>,
+    lastSeenRef: React.MutableRefObject<number>,
+    activeRef: React.MutableRefObject<boolean>,
+    setWarn: (v: boolean) => void,
+    setCd: (v: number) => void,
+  ) => {
+    const video = getVideo();
+    if (!video) return;
 
-    // Offscreen canvas — sample at 80×80 for speed
-    if (!faceDetectCanvasRef.current) {
+    if (!canvasRef.current) {
       const c = document.createElement('canvas');
       c.width = 80; c.height = 80;
-      faceDetectCanvasRef.current = c;
+      canvasRef.current = c;
     }
-    const offCanvas = faceDetectCanvasRef.current;
-    const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
+    const offCtx = canvasRef.current.getContext('2d', { willReadFrequently: true });
+    const hasFD = typeof (window as any).FaceDetector !== 'undefined';
+    const fd = hasFD ? new (window as any).FaceDetector({ fastMode: true, maxDetectedFaces: 1 }) : null;
 
-    const hasFaceDetector = typeof (window as any).FaceDetector !== 'undefined';
-    const faceDetector = hasFaceDetector
-      ? new (window as any).FaceDetector({ fastMode: true, maxDetectedFaces: 1 })
-      : null;
+    lastSeenRef.current = Date.now();
 
-    lastFaceSeenRef.current = Date.now();
-
-    // Kovac et al. skin-tone classifier (works in any lighting)
-    const isSkinPixel = (r: number, g: number, b: number): boolean => {
-      return (
-        r > 95 && g > 40 && b > 20 &&
-        Math.max(r, g, b) - Math.min(r, g, b) > 15 &&
-        Math.abs(r - g) > 15 &&
-        r > g && r > b
-      );
-    };
+    const isSkin = (r: number, g: number, b: number) =>
+      r > 95 && g > 40 && b > 20 &&
+      Math.max(r, g, b) - Math.min(r, g, b) > 15 &&
+      Math.abs(r - g) > 15 && r > g && r > b;
 
     const check = async () => {
       if (video.readyState >= 2) {
-        let faceFound = false;
+        let found = false;
         try {
-          if (faceDetector) {
-            const faces = await faceDetector.detect(video);
-            faceFound = faces.length > 0;
+          if (fd) {
+            found = (await fd.detect(video)).length > 0;
           } else if (offCtx) {
-            // Draw only the CENTER 40% of the video (where face usually is)
-            const vw = video.videoWidth || 640;
-            const vh = video.videoHeight || 480;
-            const cropX = vw * 0.3, cropY = vh * 0.1;
-            const cropW = vw * 0.4, cropH = vh * 0.8;
-            offCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, 80, 80);
-            const data = offCtx.getImageData(0, 0, 80, 80).data;
-            let skinCount = 0;
-            const total = data.length / 4;
-            for (let i = 0; i < data.length; i += 4) {
-              if (isSkinPixel(data[i], data[i + 1], data[i + 2])) skinCount++;
-            }
-            // If >8% of center pixels are skin-tone → face present
-            faceFound = (skinCount / total) > 0.08;
+            const vw = video.videoWidth || 640, vh = video.videoHeight || 480;
+            offCtx.drawImage(video, vw * 0.3, vh * 0.1, vw * 0.4, vh * 0.8, 0, 0, 80, 80);
+            const d = offCtx.getImageData(0, 0, 80, 80).data;
+            let skin = 0;
+            for (let i = 0; i < d.length; i += 4) if (isSkin(d[i], d[i+1], d[i+2])) skin++;
+            found = (skin / (d.length / 4)) > 0.08;
           }
         } catch { /* ignore */ }
 
-        if (faceFound) {
-          lastFaceSeenRef.current = Date.now();
-          if (noFaceTimerRef.current) { clearTimeout(noFaceTimerRef.current); noFaceTimerRef.current = null; }
-          if (warningTimerRef.current) { clearInterval(warningTimerRef.current); warningTimerRef.current = null; }
-          setFaceWarning(false);
-          setFaceCountdown(10);
+        if (found) {
+          lastSeenRef.current = Date.now();
+          if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+          if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+          activeRef.current = false;
+          setWarn(false); setCd(10);
         } else {
-          const elapsed = (Date.now() - lastFaceSeenRef.current) / 1000;
-          if (elapsed >= 40 && !noFaceTimerRef.current && !faceWarning) {
-            setFaceWarning(true);
-            setFaceCountdown(10);
+          const elapsed = (Date.now() - lastSeenRef.current) / 1000;
+          if (elapsed >= 40 && !timerRef.current && !activeRef.current) {
+            activeRef.current = true;
+            setWarn(true); setCd(10);
             let cd = 10;
-            noFaceTimerRef.current = setTimeout(() => {
-              setFaceWarning(false);
-              setFaceCountdown(10);
-              noFaceTimerRef.current = null;
-              if (warningTimerRef.current) { clearInterval(warningTimerRef.current); warningTimerRef.current = null; }
-              lastFaceSeenRef.current = Date.now();
+            timerRef.current = setTimeout(() => {
+              activeRef.current = false;
+              setWarn(false); setCd(10);
+              timerRef.current = null;
+              if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+              lastSeenRef.current = Date.now();
             }, 10000);
-            warningTimerRef.current = setInterval(() => {
-              cd -= 1;
-              setFaceCountdown(cd);
-            }, 1000);
+            intervalRef.current = setInterval(() => { cd -= 1; setCd(cd); }, 1000);
           }
         }
       }
-      // Check every 500ms — enough accuracy, low CPU
-      faceDetectRafRef.current = window.setTimeout(() => {
-        faceDetectRafRef.current = requestAnimationFrame(check) as unknown as number;
+      rafRef.current = window.setTimeout(() => {
+        rafRef.current = requestAnimationFrame(check) as unknown as number;
       }, 500) as unknown as number;
     };
-    faceDetectRafRef.current = requestAnimationFrame(check) as unknown as number;
-  }, [faceWarning]);
-
-  const stopFaceDetection = useCallback(() => {
-    if (faceDetectRafRef.current) { clearTimeout(faceDetectRafRef.current); faceDetectRafRef.current = null; }
-    if (noFaceTimerRef.current) { clearTimeout(noFaceTimerRef.current); noFaceTimerRef.current = null; }
-    if (warningTimerRef.current) { clearInterval(warningTimerRef.current); warningTimerRef.current = null; }
-    setFaceWarning(false);
-    setFaceCountdown(10);
+    rafRef.current = requestAnimationFrame(check) as unknown as number;
   }, []);
 
-  // Start/stop face detection based on connection state & cam status
+  const stopDetector = useCallback((
+    rafRef: React.MutableRefObject<number | null>,
+    timerRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>,
+    intervalRef: React.MutableRefObject<ReturnType<typeof setInterval> | null>,
+    activeRef: React.MutableRefObject<boolean>,
+    setWarn: (v: boolean) => void,
+    setCd: (v: number) => void,
+  ) => {
+    if (rafRef.current) { clearTimeout(rafRef.current); rafRef.current = null; }
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    activeRef.current = false;
+    setWarn(false); setCd(10);
+  }, []);
+
+  const startBothDetectors = useCallback(() => {
+    runFaceDetector(
+      () => remoteVideoRef.current, strangerDetectCanvasRef,
+      strangerDetectRafRef, strangerNoFaceTimerRef, strangerWarningTimerRef,
+      strangerLastSeenRef, strangerWarningActiveRef,
+      setStrangerFaceWarning, setStrangerCountdown,
+    );
+    runFaceDetector(
+      () => localVideoRef.current, localDetectCanvasRef,
+      localDetectRafRef, localNoFaceTimerRef, localWarningTimerRef,
+      localLastSeenRef, localWarningActiveRef,
+      setLocalFaceWarning, setLocalCountdown,
+    );
+  }, [runFaceDetector]);
+
+  const stopBothDetectors = useCallback(() => {
+    stopDetector(strangerDetectRafRef, strangerNoFaceTimerRef, strangerWarningTimerRef, strangerWarningActiveRef, setStrangerFaceWarning, setStrangerCountdown);
+    stopDetector(localDetectRafRef, localNoFaceTimerRef, localWarningTimerRef, localWarningActiveRef, setLocalFaceWarning, setLocalCountdown);
+  }, [stopDetector]);
+
+  // Start both when connected, stop when disconnected
   useEffect(() => {
     if (status === 'connected' && camOn) {
-      startFaceDetection();
+      startBothDetectors();
     } else {
-      stopFaceDetection();
+      stopBothDetectors();
     }
-    return () => stopFaceDetection();
+    return () => stopBothDetectors();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, camOn]);
 
@@ -1063,7 +1087,7 @@ export default function ChatPage() {
               )}
 
               {/* ── Stranger no-face toast ───────────────────── */}
-              {faceWarning && status === 'connected' && (
+              {strangerFaceWarning && status === 'connected' && (
                 <div className="stranger-toast">
                   <div className="stranger-toast-bar" />
                   <span className="stranger-toast-dot" />
@@ -1072,11 +1096,11 @@ export default function ChatPage() {
                       Stranger may have stepped away
                     </p>
                     <p style={{ fontSize: 11, color: '#64748b', margin: 0, marginTop: 2 }}>
-                      No face detected · auto-dismissing in {faceCountdown}s
+                      No face detected · auto-dismissing in {strangerCountdown}s
                     </p>
                   </div>
                   <button
-                    onClick={() => { stopFaceDetection(); lastFaceSeenRef.current = Date.now(); }}
+                    onClick={() => { stopDetector(strangerDetectRafRef, strangerNoFaceTimerRef, strangerWarningTimerRef, strangerWarningActiveRef, setStrangerFaceWarning, setStrangerCountdown); strangerLastSeenRef.current = Date.now(); }}
                     style={{
                       flexShrink: 0, width: 22, height: 22, borderRadius: 6, border: 'none',
                       background: 'rgba(255,255,255,0.07)', color: '#64748b',
@@ -1105,6 +1129,31 @@ export default function ChatPage() {
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#3b82f6' }} />
                 You {micOn ? '' : '(Muted)'}
               </div>
+
+              {/* ── Local (you) no-face toast ────────────────── */}
+              {localFaceWarning && status === 'connected' && camOn && (
+                <div className="stranger-toast">
+                  <div className="stranger-toast-bar" />
+                  <span className="stranger-toast-dot" />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: '#fbbf24', margin: 0, lineHeight: 1.3 }}>
+                      Your face isn't visible
+                    </p>
+                    <p style={{ fontSize: 11, color: '#64748b', margin: 0, marginTop: 2 }}>
+                      Move closer to camera · dismissing in {localCountdown}s
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { stopDetector(localDetectRafRef, localNoFaceTimerRef, localWarningTimerRef, localWarningActiveRef, setLocalFaceWarning, setLocalCountdown); localLastSeenRef.current = Date.now(); }}
+                    style={{
+                      flexShrink: 0, width: 22, height: 22, borderRadius: 6, border: 'none',
+                      background: 'rgba(255,255,255,0.07)', color: '#64748b',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 13, fontWeight: 700, lineHeight: 1,
+                    }}
+                  >✕</button>
+                </div>
+              )}
             </div>
 
 
