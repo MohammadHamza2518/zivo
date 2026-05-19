@@ -1,6 +1,12 @@
 import type { Metadata } from 'next';
 import Logo from '../../components/Logo';
-export const metadata: Metadata = { title: 'Community Guidelines — Zivo Talk' };
+export const metadata: Metadata = {
+  title: 'Community Rules & Guidelines — Zivo Talk',
+  description:
+    'Read Zivo Talk community guidelines. Stay safe, be respectful, and enjoy anonymous video chat. Rules for adults-only random video chat platform.',
+  keywords: ['zivo talk rules', 'community guidelines', 'video chat rules', 'safe chat online'],
+  alternates: { canonical: '/guidelines' },
+};
 
 const RULES = [
   { emoji: '🤝', title: 'Be Respectful', desc: 'Treat every person you meet with basic human dignity. Rude, hateful, or demeaning behaviour is not tolerated.' },

@@ -1,8 +1,19 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'About Zivo Talk — Anonymous Video Chat',
-  description: 'Learn how Zivo Talk works and meet the founder. Anonymous random video chat, built for real human connections.',
+  title: 'About Zivo Talk — Free Anonymous Random Video Chat',
+  description:
+    'Learn how Zivo Talk works. The best Omegle & Umingle alternative — built by HRS Group for instant, anonymous, peer-to-peer video chat. No signup required.',
+  keywords: [
+    'about zivo talk', 'zivo talk team', 'omegle alternative', 'random video chat app',
+    'anonymous video chat platform', 'HRS Group', 'Mohammad Hamza',
+  ],
+  alternates: { canonical: '/about' },
+  openGraph: {
+    title: 'About Zivo Talk — Free Anonymous Random Video Chat',
+    description: 'Meet the team behind Zivo Talk. Built for genuine human connection — no profiles, no data, just real conversations.',
+    url: 'https://zivotalk.live/about',
+  },
 };
 
 export default function AboutPage() {
