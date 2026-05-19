@@ -4,7 +4,7 @@ import Script from 'next/script';
 import './globals.css';
 
 const SITE_URL = 'https://zivotalk.live';
-const GA_ID = 'G-XXXXXXXXXX'; // 👈 Replace with your actual Google Analytics ID
+const GA_ID = 'G-MBZQXSDTB9'; // Real Google Analytics ID
 
 export const metadata: Metadata = {
   // ── Core ───────────────────────────────────────────────────────────────────
