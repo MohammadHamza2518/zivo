@@ -18,16 +18,10 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (searchParams.get('warn') === '1') setShowWarn(true);
-  }, [searchParams]);
-
-  // Show warning automatically on first ever visit
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const ok = localStorage.getItem('zivo-age-ok');
-      if (!ok) setShowWarn(true);
+    if (searchParams.get('warn') === '1') {
+      if (typeof window !== 'undefined') sessionStorage.removeItem('zivo-age-ok');
     }
-  }, []);
+  }, [searchParams]);
 
   // Particle canvas
   useEffect(() => {
@@ -96,12 +90,12 @@ export default function Home() {
   const handleStart = (g: 'male' | 'female') => {
     setGender(g);
     if (typeof window !== 'undefined') localStorage.setItem('zivo-gender', g);
-    const ok = typeof window !== 'undefined' && localStorage.getItem('zivo-age-ok');
+    const ok = typeof window !== 'undefined' && sessionStorage.getItem('zivo-age-ok');
     if (ok) { go(); } else { setShowWarn(true); }
   };
 
   const handleAccept = () => {
-    if (typeof window !== 'undefined') localStorage.setItem('zivo-age-ok', '1');
+    if (typeof window !== 'undefined') sessionStorage.setItem('zivo-age-ok', '1');
     setShowWarn(false);
     go();
   };

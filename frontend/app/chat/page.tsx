@@ -247,7 +247,7 @@ export default function ChatPage() {
   }, []);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('zivo-age-ok')) {
+    if (typeof window !== 'undefined' && !sessionStorage.getItem('zivo-age-ok')) {
       router.push('/?warn=1');
       return;
     }
